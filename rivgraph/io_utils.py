@@ -181,15 +181,22 @@ def nodes_to_geofile(nodes, dims, gt, crs, path_export):
     gdf = gpd.GeoDataFrame(geometry=all_nodes)
     gdf.crs = crs
 
-    # Store attributes as strings (numpy types give fiona trouble)
+    # Store complex attributes as strings (numpy types give fiona trouble)
     dontstore = ['idx']
-    storekeys = [k for k in nodes.keys() if len(nodes[k]) == len(nodes['id']) and k not in dontstore]
-    store_as_num = ['id', 'idx', 'logflux', 'flux', 'outletflux']
+    storekeys = [k for k in nodes.keys() if
+                 len(nodes[k]) == len(nodes['id']) and k not in dontstore]
+
+    store_as_num = []
+    # figure out which attributes are simple floats/integers
+    # these can be stored as numbers, no problem
+    store_as_num = gen_store_list(store_as_num, nodes)
+
     for k in storekeys:
         if k in store_as_num:
             gdf[k] = [c for c in nodes[k]]
         else:
-            gdf[k] = [str(c).replace('[', '').replace(']', '') for c in nodes[k]]
+            gdf[k] = [str(c).replace('[', '').replace(']', '') for c
+                      in nodes[k]]
 
     # Write geodataframe to file
     gdf.to_file(path_export, driver=get_driver(path_export))
@@ -233,11 +240,17 @@ def links_to_geofile(links, dims, gt, crs, path_export):
     gdf = gpd.GeoDataFrame(geometry=all_links)
     gdf.crs = crs
 
-    # Store attributes as strings (numpy types give fiona trouble)
+    # Store complex attributes as strings (numpy types give fiona trouble)
     dontstore = ['idx', 'n_networks']
     storekeys = [k for k in links.keys() if k not in dontstore]
     storekeys = [k for k in storekeys if len(links[k]) == len(links['id'])]
     store_as_num = ['id', 'flux', 'logflux']
+
+    store_as_num = []
+    # figure out which attributes are simple floats/integers
+    # these can be stored as numbers, no problem
+    store_as_num = gen_store_list(store_as_num, links, storekeys)
+
     for k in storekeys:
         if k in store_as_num:
             gdf[k] = [c for c in links[k]]
@@ -248,6 +261,49 @@ def links_to_geofile(links, dims, gt, crs, path_export):
 
     # Write geodataframe to file
     gdf.to_file(path_export, driver=get_driver(path_export))
+
+
+def gen_store_list(_list, _dict, storekeys=None):
+    """
+    Generates a list of attributes to store in the exported geometry files.
+
+    Used for setting node and link attributes to save as numbers because the
+    attributes are simple integers or floats. Things like lists, np.ndarrays,
+    and other Python objects cannot be stored as attributes of exported
+    geometry files.
+
+    Parameters
+    ----------
+    _list : list
+        List (can be empty) to append the attribute names onto
+
+    _dict : dictionary
+        Dictionary (nodes or links) from which key-value pairs are checked
+        using the first and last values to see if they are integers or floats
+
+    storekeys : list, optional
+        If provided sets the list of attributes to check for
+
+    Returns
+    -------
+    _list : list
+        List with appended attribute names
+
+    """
+    if storekeys is None:
+        _keylist = _dict.keys()
+    else:
+        _keylist = storekeys
+
+    for i in _keylist:
+        if isinstance(_dict[i][0], int) is True \
+          and isinstance(_dict[i][-1], int) is True:
+            _list.append(i)
+        elif isinstance(_dict[i][0], float) is True \
+          and isinstance(_dict[i][-1], float) is True:
+            _list.append(i)
+
+    return _list
 
 
 def centerline_to_geovector(cl, crs, path_export):
