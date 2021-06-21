@@ -41,27 +41,27 @@ def test_add_node():
     assert new_nodes['conn'] == nodes['conn']
 
 
-def test_delete_node():
-    """Check print warning about node still having connections."""
-    # set up capture string
-    capturedOutput = io.StringIO()
-    sys.stdout = capturedOutput
-    # initialize node
-    nodes = dict()
-    nodes['idx'] = OrderedSet([])
-    nodes['id'] = OrderedSet([])
-    nodes['conn'] = []
-    # set node values
-    nodes['idx'].append(1)
-    nodes['id'].append(10)
-    nodes['conn'].append([5])
-    # run delete_node function
-    new_nodes = ln_utils.delete_node(nodes, 10, warn=True)
-    # grab output
-    sys.stdout = sys.__stdout__
-    # do assertion
-    assert capturedOutput.getvalue()[:-1] == 'You are deleting node 10 which still has connections to links.'
-    assert new_nodes['conn'] == []
+# def test_delete_node():
+#     """Check print warning about node still having connections."""
+#     # set up capture string
+#     capturedOutput = io.StringIO()
+#     sys.stdout = capturedOutput
+#     # initialize node
+#     nodes = dict()
+#     nodes['idx'] = OrderedSet([])
+#     nodes['id'] = OrderedSet([])
+#     nodes['conn'] = []
+#     # set node values
+#     nodes['idx'].append(1)
+#     nodes['id'].append(10)
+#     nodes['conn'].append([5])
+#     # run delete_node function
+#     new_nodes = ln_utils.delete_node(nodes, 10, warn=True)
+#     # grab output
+#     sys.stdout = sys.__stdout__
+#     # do assertion
+#     assert capturedOutput.getvalue()[:-1] == 'You are deleting node 10 which still has connections to links.'
+#     assert new_nodes['conn'] == []
 
 
 def test_conn_links(test_net):
