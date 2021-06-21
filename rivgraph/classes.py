@@ -156,7 +156,7 @@ class rivnetwork:
 
         # Create dummy georeferencing if none is supplied
         if self.gdobj.GetProjection() == '':
-            print('Input mask is unprojected; assigning a dummy projection.')
+            logger.info('Input mask is unprojected; assigning a dummy projection.')
             # Creates a dummy projection in EPSG:4326 with UL coordinates (0,0)
             # and pixel resolution = 1.
             self.wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]' # 4326
@@ -252,7 +252,7 @@ class rivnetwork:
 
         """
         if 'certain' not in self.links.keys():
-            print('Junction angles cannot be computed before link directions are set.')
+            logger.info('Junction angles cannot be computed before link directions are set.')
         else:
             self.nodes = lnu.junction_angles(self.links, self.nodes,
                                              self.imshape, self.pixlen,
@@ -291,7 +291,7 @@ class rivnetwork:
             if hasattr(self, 'links') is True:
                 do_surr = True
             else:
-                print('Cannot compute surrounding island links without first computing the network. Skipping.')
+                logger.info('Cannot compute surrounding island links without first computing the network. Skipping.')
 
         logger.info('Getting island properties...')
 
@@ -339,12 +339,12 @@ class rivnetwork:
             plt_directions = True
 
         if hasattr(self, 'links') is False:
-            print('Network has not been computed yet; cannot plot.')
+            logger.info('Network has not been computed yet; cannot plot.')
             return
 
         if plt_directions is True:
             if 'certain' not in self.links.keys():
-                print('Must assign link directions before plotting link directions.')
+                logger.info('Must assign link directions before plotting link directions.')
                 return
             else:
                 d = lnu.plot_dirlinks(self.links, self.imshape)
@@ -367,14 +367,14 @@ class rivnetwork:
 
         """
         if path==None and hasattr(self, 'paths') is False:
-            print('No path is available to load the network.')
+            logger.info('No path is available to load the network.')
         elif path is None:
             path = self.paths['network_pickle']
             try:
                 io.pickle_links_and_nodes(self.links, self.nodes, path)
-                print('Links and nodes saved to pickle file: {}.'.format(self.paths['network_pickle']))
+                logger.info('Links and nodes saved to pickle file: {}.'.format(self.paths['network_pickle']))
             except AttributeError:
-                print('Network has not been computed yet. Use the compute_network() method first.')
+                logger.info('Network has not been computed yet. Use the compute_network() method first.')
 
 
     def load_network(self, path=None):
@@ -389,14 +389,14 @@ class rivnetwork:
         """
 
         if path==None and hasattr(self, 'paths') is False:
-            print('No path is available to load the network.')
+            logger.info('No path is available to load the network.')
             return
 
         if path is None:
             path = self.paths['network_pickle']
 
         if os.path.isfile(path) is False:
-                print('No file was found at provided path: {}.'.format(path))
+                logger.info('No file was found at provided path: {}.'.format(path))
         else:
             self.links, self.nodes = io.unpickle_links_and_nodes(path)
 
@@ -485,13 +485,13 @@ class rivnetwork:
                     self.paths['links'] = os.path.join(self.paths['basepath'], self.name + '_links.' + ext)
                     io.links_to_geofile(self.links, self.imshape, self.gt, self.crs, self.paths['links'])
                 else:
-                    print('Links have not been computed and thus cannot be exported.')
+                    logger.info('Links have not been computed and thus cannot be exported.')
             if te == 'nodes':
                 if hasattr(self, 'nodes') is True:
                     self.paths['nodes'] = os.path.join(self.paths['basepath'], self.name + '_nodes.' + ext)
                     io.nodes_to_geofile(self.nodes, self.imshape, self.gt, self.crs, self.paths['nodes'])
                 else:
-                    print('Nodes have not been computed and thus cannot be exported.')
+                    logger.info('Nodes have not been computed and thus cannot be exported.')
             if te == 'mesh':
                 if hasattr(self, 'meshlines') is True and type(self) is river:
                     self.paths['meshlines'] = os.path.join(self.paths['basepath'], self.name + '_meshlines.' + ext)
@@ -499,19 +499,19 @@ class rivnetwork:
                     io.shapely_list_to_geovectors(self.meshlines, self.crs, self.paths['meshlines'])
                     io.shapely_list_to_geovectors(self.meshpolys, self.crs, self.paths['meshpolys'])
                 else:
-                    print('Mesh has not been computed and thus cannot be exported.')
+                    logger.info('Mesh has not been computed and thus cannot be exported.')
             if te == 'centerline':
                 if hasattr(self, 'centerline') is True and type(self) is river:
                     self.paths['centerline'] = os.path.join(self.paths['basepath'], self.name + '_centerline.' + ext)
                     io.centerline_to_geovector(self.centerline, self.crs, self.paths['centerline'])
                 else:
-                    print('Centerlines has not been computed and thus cannot be exported.')
+                    logger.info('Centerlines has not been computed and thus cannot be exported.')
             if te == 'centerline_smooth':
                 if hasattr(self, 'centerline_smooth') is True and type(self) is river:
                     self.paths['centerline_smooth'] = os.path.join(self.paths['basepath'], self.name + '_centerline_smooth.' + ext)
                     io.centerline_to_geovector(self.centerline_smooth, self.crs, self.paths['centerline_smooth'])
                 else:
-                    print('Smoothed centerline has not been computed and thus cannot be exported.')
+                    logger.info('Smoothed centerline has not been computed and thus cannot be exported.')
 
 
     def to_geotiff(self, export):
@@ -529,7 +529,7 @@ class rivnetwork:
         """
         valid_exports = ['directions', 'distance', 'skeleton']
         if export not in valid_exports:
-            print('Cannot write {}. Choose from {}.'.format(export, valid_exports))
+            logger.info('Cannot write {}. Choose from {}.'.format(export, valid_exports))
             return
 
         if export == 'directions':
@@ -553,7 +553,7 @@ class rivnetwork:
 
             io.write_geotiff(raster, self.gt, self.wkt, outpath, dtype=dtype, options=options, color_table=color_table, nbands=nbands)
 
-        print('Geotiff written to {}.'.format(outpath))
+        logger.info('Geotiff written to {}.'.format(outpath))
 
 
 class delta(rivnetwork):
@@ -898,7 +898,7 @@ class centerline():
                 if alen == 1 or alen == len(x):
                     setattr(self, a, attribs[a])
                 else:
-                    print('Attribute {} does not have the proper length and is not being stored.'.format(a))
+                    logger.info('Attribute {} does not have the proper length and is not being stored.'.format(a))
 
     def __get_x_and_y(self):
 
@@ -933,7 +933,7 @@ class centerline():
             if hasattr(self, 'window_cl'):
                 window = self.window_cl
             else:
-                print('Must provide a smoothing window.')
+                logger.info('Must provide a smoothing window.')
                 return
 
         # Ensure window is integer and odd
@@ -1002,7 +1002,7 @@ class centerline():
             if hasattr(self, 'window_C'):
                 window = self.window_C
             else:
-                print('Must provide a smoothing window.')
+                logger.info('Must provide a smoothing window.')
                 return
 
         Cs = self.C()
@@ -1080,7 +1080,7 @@ class centerline():
             self.ints = np.array(ints)
 
         else:
-            print('Could not map intersections to inflection point pairs because infs_os not computed. Run infs() first.')
+            logger.info('Could not map intersections to inflection point pairs because infs_os not computed. Run infs() first.')
 
 
     def mig_rate_transect_matching(self, x2, y2, dt_years, path_matchers, x1=None, y1=None, mig_spacing=None, window=None, path_mig_vectors=None):
@@ -1114,7 +1114,7 @@ class centerline():
         # Export migration vectors if path provided
         if path_mig_vectors is not None:
             if self.crs is None:
-                print('Cannot export migration vectors until crs is set.')
+                logger.info('Cannot export migration vectors until crs is set.')
             else:
                 # Migration vectors export
                 mvs = []
@@ -1221,15 +1221,15 @@ class centerline():
         """
 
         if hasattr(self, 'infs_os') is False:
-            print('Must compute inflection points first.')
+            logger.info('Must compute inflection points first.')
             return
 
         if hasattr(self, 'ints') is False:
-            print('Must compute intersections first.')
+            logger.info('Must compute intersections first.')
             return
 
         if hasattr(self, 'mr_zs_nan') is False:
-            print('Must compute migration rates first.')
+            logger.info('Must compute migration rates first.')
             return
 #            elif hasattr(self, 'mr_zs_sm_nan'):
 #                migr_rate = self.mr_zs_sm_nan
@@ -1250,7 +1250,7 @@ class centerline():
             if hasattr(self, 'window_C'):
                 window = self.window_C
             else:
-                print('Must provide a smoothing window.')
+                logger.info('Must provide a smoothing window.')
                 return
 
         LZC = self.infs_os

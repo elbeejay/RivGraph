@@ -7,6 +7,7 @@ Created on Mon Sep 10 09:59:52 2018
 
 @author: Jon
 """
+from loguru import logger
 import shapely
 import numpy as np
 from scipy.stats import mode
@@ -47,7 +48,7 @@ def add_node(nodes, idx, linkconn):
         linkconn = [linkconn]
 
     if idx in nodes['idx']:
-        print('Node already in set; returning unchanged.')
+        logger.info('Node already in set; returning unchanged.')
         return nodes
 
     # Find new node ID
@@ -232,7 +233,7 @@ def delete_node(nodes, nodeid, warn=True):
     # Check that the node has no connectivity
     nodeidx = nodes['id'].index(nodeid)
     if len(nodes['conn'][nodeidx]) != 0 and warn == True:
-        print('You are deleting node {} which still has connections to links.'.format(nodeid))
+        logger.info('You are deleting node {} which still has connections to links.'.format(nodeid))
 
     # Remove the node and its properties
     for nk in nodekeys:
@@ -912,10 +913,10 @@ def remove_two_link_nodes(links, nodes, dontremove):
             conn = nodes['conn'][nidx][:]
             # We want to combine links where a node has only two connections
             if len(conn) == 2 and nid not in dontremove:
-                
+
                 # First check if the node is connected to itself. This can
                 # happen for small subnetworks where all the spurs have been
-                # removed, leaving an isolated loop. (Occurs in masks that 
+                # removed, leaving an isolated loop. (Occurs in masks that
                 # have not been filtered to the largest connected component.)
                 # See https://github.com/jonschwenk/RivGraph/issues/32
                 if len(set(conn)) == 1:
@@ -1223,7 +1224,7 @@ def add_artificial_nodes(links, nodes, gd_obj):
         for tr in to_rem:
             if tr in links.keys():
                 del links[tr]
-        print('{} artificial nodes added. Link lengths and widths should be recomputed via the link_widths_and_lengths() function in ln_utils.'.format(len(arts)))
+        logger.info('{} artificial nodes added. Link lengths and widths should be recomputed via the link_widths_and_lengths() function in ln_utils.'.format(len(arts)))
 
     return links, nodes
 
@@ -1529,8 +1530,8 @@ def links_to_gpd(links, gdobj):
     links_gpd['id'] = links['id']
     links_gpd['us node'] = [c[0] for c in links['conn']]
     links_gpd['ds node'] = [c[1] for c in links['conn']]
-    
-    # Assign CRS - done last to avoid DeprecationWarning - need geometry 
+
+    # Assign CRS - done last to avoid DeprecationWarning - need geometry
     # to exist before assigning CRS.
     links_gpd.crs = CRS(gdobj.GetProjection())
 

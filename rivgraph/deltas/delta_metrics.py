@@ -6,6 +6,7 @@ Created on Mon May 21 09:00:01 2018
 
 @author: Jon
 """
+from loguru import logger
 import numpy as np
 import networkx as nx
 import rivgraph.directionality as dy
@@ -137,11 +138,12 @@ def graphiphy(links, nodes, weight=None):
         weights = np.ones((len(links['conn']), 1))
     else:
         weights = np.array(links[weight])
-        
+
     # Check weights
-    print(np.sum(weights<=0))
+    logger.info('Graph weights check, weights below 0: ' +
+                str(np.sum(weights<=0)))
     if np.sum(weights<=0) > 0:
-        print('shit')
+        logger.info('shit')
         raise Warning('One or more of your weights is =< 0. This could cause problems later.')
 
     G = nx.DiGraph()
@@ -186,7 +188,7 @@ def intermediate_vars(G):
     # entries a_{uv} that correspond to the fraction of the flux
     # present at node v that flows through the channel (vu). Flux partitioning
     # is done via channel widths.
-    
+
     # Compute normalized weighted adjacency matrix
     A = normalize_adj_matrix(G)
 
@@ -661,7 +663,7 @@ def dyn_leakage_index(deltavars, epsilon=10**-10):
     a = apexid
     I = np.where(A[:, a] > 0)[0]
     if len(I) < 2:
-        print('Warning: the apex of the delta has only one node downstream. It is recommended that there be at least two downstream links from the apex to avoid biases.')
+        logger.info('Warning: the apex of the delta has only one node downstream. It is recommended that there be at least two downstream links from the apex to avoid biases.')
 
     # Fluxes at each node F and subnetworks subN
     F = deltavars['F_w'].copy()
