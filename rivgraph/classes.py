@@ -6,6 +6,8 @@ Classes for running rivgraph commands on your channel network or centerline.
 
 """
 import os
+import sys
+from loguru import logger
 try:
     from osgeo import gdal
 except ImportError:
@@ -70,7 +72,7 @@ class rivnetwork:
         ----------
         name : str
             the name of the channel network, usually the river or delta's name
-        verbose : str
+        verbose : bool
             [True] or False to specify if processing updates should be printed.
         d : osgeo.gdal.Dataset
             object created by gdal.Open() that provides access to geotiff
@@ -125,6 +127,28 @@ class rivnetwork:
                                     path_to_mask)
         self.paths['input_mask'] = os.path.normpath(path_to_mask)
 
+        # init logger - prints out to stdout if verbose is True
+        # ALWAYS writes output to log file (doesn't print if verbose is False)
+        if self.verbose is True:
+            logger.configure(
+                handlers=[
+                    dict(sink=self.paths['log'],
+                         format="[{time:YYYY-MM-DD at HH:mm:ss}] | {message}"),
+                    dict(sink=sys.stdout,
+                         format="{message}")
+                ],
+                activation=[("", True)],
+            )
+        else:
+            logger.configure(
+                handlers=[
+                    dict(sink=self.paths['log'],
+                         format="[{time:YYYY-MM-DD at HH:mm:ss}] | {message}"),
+                ],
+                activation=[("", True)],
+            )
+        logger.info("-"*10 + " New Run " + "-"*10)
+
         # Handle georeferencing
         # GA_Update required for setting dummy projection/geotransform
         self.gdobj = gdal.Open(self.paths['input_mask'], gdal.GA_Update)
@@ -167,13 +191,11 @@ class rivnetwork:
         if hasattr(self, 'Iskel') is False:
             self.skeletonize()
 
-        if self.verbose is True:
-            print('Resolving links and nodes...', end='')
+        logger.info('Resolving links and nodes...')
 
         self.links, self.nodes = m2g.skel_to_graph(self.Iskel)
 
-        if self.verbose is True:
-                print('done.')
+        logger.info('links and nodes have been resolved.')
 
 
     def compute_distance_transform(self):
@@ -186,13 +208,11 @@ class rivnetwork:
             os.path.isfile(self.paths['Idist']) is True:
             self.Idist = gdal.Open(self.paths['Idist']).ReadAsArray()
         else:
-            if self.verbose is True:
-                print('Computing distance transform...', end='')
+            logger.info('Computing distance transform...')
 
             self.Idist = distance_transform_edt(self.Imask)
 
-            if self.verbose is True:
-                print('done.')
+            logger.info('distance transform done.')
 
 
     def compute_link_width_and_length(self):
@@ -207,15 +227,13 @@ class rivnetwork:
         if hasattr(self, 'Idist') is False:
             self.compute_distance_transform()
 
-        if self.verbose is True:
-            print('Computing link widths and lengths...', end='')
+        logger.info('Computing link widths and lengths...')
 
         # Widths and lengths are appended to links dict
         self.links = lnu.link_widths_and_lengths(self.links, self.Idist,
                                                  pixlen=self.pixlen)
 
-        if self.verbose is True:
-            print('done.')
+        logger.info('link widths and lengths computed.')
 
 
     def compute_junction_angles(self, weight=None):
@@ -275,25 +293,21 @@ class rivnetwork:
             else:
                 print('Cannot compute surrounding island links without first computing the network. Skipping.')
 
-        if self.verbose is True:
-            print('Getting island properties...', end='')
+        logger.info('Getting island properties...')
 
         islands, Iislands = mu.get_island_properties(self.Imask, self.pixlen, self.pixarea, self.crs, self.gt, props, connectivity=connectivity)
 
-        if self.verbose is True:
-            print('done.')
+        logger.info('got island properties.')
 
         if do_surr is True:
             if hasattr(self.links, 'wid_adj') is False:
                 self.compute_link_width_and_length()
 
-            if self.verbose is True:
-                print('Computing surrounding links for each island...', end='')
+            logger.info('Computing surrounding links for each island...')
 
             islands = mu.surrounding_link_properties(self.links, self.nodes, self.Imask, islands, Iislands, self.pixlen, self.pixarea)
 
-            if self.verbose is True:
-                print('done.')
+            logger.info('surrounding links computed.')
 
         # Add a column to be used for thresholding
         islands['remove'] = [False for i in range(len(islands))]
@@ -589,13 +603,11 @@ class delta(rivnetwork):
             self.Iskel = gdal.Open(self.paths['Iskel']).ReadAsArray()
 
         else:
-            if self.verbose is True:
-                print('Skeletonizing mask...', end='')
+            logger.info('Skeletonizing mask...')
 
             self.Iskel = m2g.skeletonize_mask(self.Imask)
 
-            if self.verbose is True:
-                print('done.')
+            logger.info('done skeletonization.')
 
 
     def prune_network(self, path_shoreline=None, path_inletnodes=None):
@@ -736,13 +748,11 @@ class river(rivnetwork):
             self.Iskel = gdal.Open(self.paths['Iskel']).ReadAsArray()
 
         else:
-            if self.verbose is True:
-                print('Skeletonizing mask...', end='')
+            logger.info('Skeletonizing mask...')
 
             self.Iskel = m2g.skeletonize_river_mask(self.Imask, self.exit_sides)
 
-            if self.verbose is True:
-                print('done.')
+            logger.info('skeletonization is done.')
 
 
     def prune_network(self):
@@ -764,15 +774,13 @@ class river(rivnetwork):
         Computes the centerline of the holes-filled river binary image.
 
         """
-        if self.verbose is True:
-            print('Computing centerline...', end='')
+        logger.info('Computing centerline...')
 
         centerline_pix, valley_centerline_widths = ru.mask_to_centerline(self.Imask, self.exit_sides)
         self.max_valley_width_pixels = np.max(valley_centerline_widths)
         self.centerline = gu.xy_to_coords(centerline_pix[:,0], centerline_pix[:,1], self.gt)
 
-        if self.verbose is True:
-            print('done.')
+        logger.info('centerline computation is done.')
 
 
     def compute_mesh(self, grid_spacing=None, smoothing=0.1, buf_halfwidth=None):
@@ -823,24 +831,20 @@ class river(rivnetwork):
             # Compute the maximum valley width in pixels
             if hasattr(self, 'max_valley_width_pixels') is False:
 
-                if self.verbose is True:
-                    print('Computing maximum valley width...', end='')
+                logger.info('Computing maximum valley width...')
 
                 self.max_valley_width_pixels = ru.max_valley_width(self.Imask)
 
-                if self.verbose is True:
-                    print('done.')
+                logger.info('valley width computation is done.')
 
             # Multiply by pixlen to keep units consistent
             buf_halfwidth = self.max_valley_width_pixels * self.pixlen * 1.1
 
-        if self.verbose is True:
-            print('Generating mesh...', end='')
+        logger.info('Generating mesh...')
 
         self.meshlines, self.meshpolys, self.centerline_smooth = ru.valleyline_mesh(self.centerline, self.avg_chan_width, buf_halfwidth, grid_spacing, smoothing=smoothing)
 
-        if self.verbose is True:
-            print('done.')
+        logger.info('mesh generation is done.')
 
 
     def assign_flow_directions(self):
@@ -861,13 +865,11 @@ class river(rivnetwork):
         if hasattr(self, 'Idist') is False:
             self.compute_distance_transform()
 
-        if self.verbose is True:
-            print('Setting link directionality...', end='')
+        logger.info('Setting link directionality...')
 
         self.links, self.nodes = rd.set_directionality(self.links, self.nodes, self.Imask, self.exit_sides, self.gt, self.meshlines, self.meshpolys, self.Idist, self.pixlen, self.paths['fixlinks_csv'])
 
-        if self.verbose is True:
-            print('done.')
+        logger.info('link directionality has been set.')
 
 
 class centerline():

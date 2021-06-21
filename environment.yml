@@ -17,3 +17,5 @@ dependencies:
   - fiona
   - rivgraph
   - fastdtw
+  - pip:
+    - loguru
