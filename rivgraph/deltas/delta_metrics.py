@@ -160,13 +160,14 @@ def add_super_apex(links, nodes, imshape):
         sa_widths.append(sum([links['wid_adj'][links['id'].index(lid)] for lid in lconn]))
 
     # Add links from the super-apex to the inlet nodes
-    # Widths are computed above; lengths are set to zero for these synthetic links
+    # Widths are computed above
+    # lengths are set to zero for these synthetic links
     for i, wid in zip(ins, sa_widths):
         in_idx = nodes['idx'][nodes['id'].index(i)]
         idcs = [apex_idx, in_idx]
         links, nodes = lnu.add_link(links, nodes, idcs)
         links['wid_adj'].append(wid)
-        links['wid'].append(wid) # we also append to the width attribute to keep the fields the same length
+        links['wid'].append(wid)  # we also append to the width attribute to keep the fields the same length
         links['len'].append(0)
         links['len_adj'].append(0)
 
@@ -177,13 +178,38 @@ def add_super_apex(links, nodes, imshape):
     return links, nodes
 
 
-def graphiphy(links, nodes, weight=None):
+def graphiphy(links, nodes, weight=None, inletweights=None):
     """
     Converts the RivGraph links and nodes dictionaries into a NetworkX graph
     object.
+
+    Parameters
+    ----------
+    links : dict
+        RivGraph links and their attributes
+
+    nodes : dict
+        RivGraph nodes and their attributes
+
+    weight : str, optional
+        Link attribute to use to weight the NetworkX graph. If not provided or
+        None, the graph will be unweighted (links of 1 and 0)
+
+    inletweights : list, optional
+        Optional manual weights for the inlets when using the super-apex
+        functionality. Overrides the weight set by the inlet link attribute
+        in favor of values from the provided list. List must be in the same
+        order and have the same length as nodes['inlets'].
+
+    Returns
+    -------
+    G : networkx.DiGraph
+        Returns a NetworkX DiGraph object weighted by the link attribute
+        specified in the optional parameter `weight`
+
     """
     if weight is not None and weight not in links.keys():
-        raise RuntimeError('Provided weight key not in nodes dictionary.')
+        raise RuntimeError('Provided weight key not in links dictionary.')
 
     if weight is None:
         weights = np.ones((len(links['conn']), 1))
@@ -192,10 +218,22 @@ def graphiphy(links, nodes, weight=None):
 
     # Check weights
     logger.info('Graph weights check, weights below 0: ' +
-                str(np.sum(weights<=0)))
-    if np.sum(weights<=0) > 0:
+                str(np.sum(weights <= 0)))
+    if np.sum(weights <= 0) > 0:
         logger.info('One or more of your weights is =< 0. This could cause problems later.')
         raise Warning('One or more of your weights is =< 0. This could cause problems later.')
+
+    if inletweights is not None:
+        if 'super_apex' not in nodes.keys():
+            raise RuntimeError('Can only specify weights if super-apex has been added.')
+        if len(inletweights) != len(nodes['inlets']):
+            raise RuntimeError('graphiphy requires {} weights but {} were provided.'.format(len(nodes['inlets']), len(inletweights)))
+        # Set weights of inlet links
+        for inw, inl in zip(inletweights, nodes['inlets']):
+            lconn = nodes['conn'][nodes['id'].index(inl)][:]
+            lconn = [lc for lc in lconn if lc in nodes['conn'][nodes['id'].index(nodes['super_apex'])]]
+            lidx = links['id'].index(lconn[0])
+            weights[lidx] = inw
 
     G = nx.DiGraph()
     G.add_nodes_from(nodes['id'])
