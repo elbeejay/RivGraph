@@ -167,7 +167,10 @@ def add_super_apex(links, nodes, imshape):
         idcs = [apex_idx, in_idx]
         links, nodes = lnu.add_link(links, nodes, idcs)
         links['wid_adj'].append(wid)
-        links['wid'].append(wid)  # we also append to the width attribute to keep the fields the same length
+        # we also append to the other attributes to keep fields the same length
+        links['wid'].append(wid)
+        links['wid_med'].append(wid)
+        links['sinuosity'].append(wid)
         links['len'].append(0)
         links['len_adj'].append(0)
 
@@ -321,7 +324,7 @@ def find_inlet_outlet_nodes(A):
     return apex, outlets
 
 
-def compute_steady_state_link_fluxes(G, links, nodes):
+def compute_steady_state_link_fluxes(G, links, nodes, weight_name='flux_ss'):
     """
     Computes the steady state fluxes through links given a directed, weighted,
     NetworkX graph. The network should have only a single inlet (use either
@@ -329,6 +332,26 @@ def compute_steady_state_link_fluxes(G, links, nodes):
     this method will fail if the network has parallel edges. You should first
     run ln_utils artificial_nodes() function to break parallel edges, then
     re-compute link widths and lengths.
+
+    Parameters
+    ----------
+    G : networkx.DiGraph
+        NetworkX DiGraph object from graphiphy()
+
+    links : dict
+        RivGraph links dictionary
+
+    nodes : dict
+        RivGraph nodes dictionary
+
+    weight_name : str, optional
+        Name to give the new attribute in the links dictionary, is optional,
+        if not provided will be 'flux_ss' (flux steady-state
+
+    Returns
+    -------
+    links : dict
+        RivGraph links dictionary with new attribute
     """
 
     # Normalize the adjacency matrix
@@ -339,21 +362,21 @@ def compute_steady_state_link_fluxes(G, links, nodes):
     fluxes, _ = delta_subN_F(An_t)
 
     # Fluxes are at-a-node and need to be translated to links
-    fluxes = np.expand_dims(fluxes,1)
+    fluxes = np.expand_dims(fluxes, 1)
     # Expand node-fluxes back to full adjacency matrix
     fw = fluxes * An
     # All nonzero elements in fw represent links where there is flux
-    rows, cols = np.where(fw>0)
+    rows, cols = np.where(fw > 0)
     Gnodes = list(G.nodes)
-    linkfluxes = np.zeros((len(links['id']),1)) # Preallocate storage
-    for (r,c) in zip(rows,cols):
+    linkfluxes = np.zeros((len(links['id']), 1))  # Preallocate storage
+    for (r, c) in zip(rows, cols):
         u = Gnodes[r]
         v = Gnodes[c]
-        link_id = G.edges[u,v]['eyedee']
-        linkfluxes[links['id'].index(link_id)] = fw[r,c]
+        link_id = G.edges[u, v]['linkid']
+        linkfluxes[links['id'].index(link_id)] = fw[r, c]
 
     # Store the fluxes in the links dict
-    links['flux_ss'] = np.array(linkfluxes).flatten().tolist()
+    links[weight_name] = np.array(linkfluxes).flatten().tolist()
 
     return links
 

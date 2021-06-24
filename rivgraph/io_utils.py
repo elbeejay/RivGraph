@@ -201,7 +201,7 @@ def nodes_to_geofile(nodes, dims, gt, crs, path_export):
     store_as_num = []
     # figure out which attributes are simple floats/integers
     # these can be stored as numbers, no problem
-    store_as_num = gen_store_list(store_as_num, nodes)
+    store_as_num = gen_store_list(store_as_num, nodes, storekeys)
 
     for k in storekeys:
         if k in store_as_num:
