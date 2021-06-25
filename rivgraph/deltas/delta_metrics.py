@@ -1024,10 +1024,21 @@ def calc_QR(links, nodes, wt='wid_adj', new_at='graphQR'):
                 wid_1 = links[wt][links['id'].index(link_ids[1])]
                 wid_2 = links[wt][links['id'].index(link_ids[2])]
 
-            # calculate and assign QR to the node of interest
-            wid_big = np.max([wid_1, wid_2])
-            wid_small = np.min([wid_1, wid_2])
-            nodes[new_at][i] = wid_big / wid_small
+        # for inlets w/ only 2 connecting links
+        elif nodes['id'][i] in nodes['inlets'] and len(nodes['conn'][i]) == 2:
+            link_ids = nodes['conn'][i]
+            wid_1 = links[wt][links['id'].index(link_ids[0])]
+            wid_2 = links[wt][links['id'].index(link_ids[1])]
+
+        # catch-all for other scenarios: QR will be -1
+        else:
+            wid_1 = -1
+            wid_2 = 1
+
+        # calculate and assign QR to the node of interest
+        wid_big = np.max([wid_1, wid_2])
+        wid_small = np.min([wid_1, wid_2])
+        nodes[new_at][i] = wid_big / wid_small
 
     # coerce into list
     nodes[new_at] = list(nodes[new_at])
