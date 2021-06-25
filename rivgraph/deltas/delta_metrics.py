@@ -954,3 +954,82 @@ def dyn_entropy_based_dyn(deltavars, epsilon=10**-10):
         DCE[i, 1] = DCE_sum
 
     return DMI, DCE
+
+
+def calc_QR(links, nodes, wt='wid_adj', new_at='graphQR'):
+    """Clunky solution (target for optimization) to get QR at bifurcations.
+
+    QR is defined as the larger branch Q / smaller branch Q per
+    Edmonds & Slingerland 2008. This measure of flux partitioning at a
+    bifurcation does not scale beyond bifurcations to trifurcations etc.
+
+    The graph-based flux partitioning scheme also assumes flow is routed
+    in a steady-state manner based on the width (or some other attribute)
+    of the links in the network. Therefore the actual flux value doesn't
+    matter, we can calculate QR as larger width / smaller width from the two
+    branches as that will be the same as if we'd calculated the steady-state
+    fluxes and taken their ratio.
+
+    The function is written flexibly to allow one to assuming flux weighting
+    by an attribute other than the link width if desired.
+
+    Parameters
+    ----------
+    links : dict
+        RivGraph links dictionary
+    nodes : dict
+        RivGraph nodes dictionary
+    wt : str, optional
+        String pointing to the link attribute to use when calculating ratios,
+        optional, default is 'wid_adj' which is the adjusted link widths
+    new_at : str, optional
+        Name of the new attribute to add to the nodes dictionary, optional,
+        default is 'graphQR' to indicate the graph calculated QR value
+
+    Returns
+    -------
+    nodes : dict
+        RivGraph dictionary with new_at attribute added
+
+    """
+    # check links for wt attribute
+    if wt not in links.keys():
+        raise ValueError('wt attribute not in the links dictionary')
+
+    # set up list of zeros
+    nodes[new_at] = np.zeros_like(nodes['id'], dtype=float)
+
+    for i in range(len(nodes['id'])):
+        # for bifurcations
+        if len(nodes['conn'][i]) == 3:
+            # get the 3 connected link ids
+            link_ids = nodes['conn'][i]
+            # get upstream node for each link, its "start" point
+            link_starts = [links['conn'][links['id'].index(link_ids[0])][0],
+                           links['conn'][links['id'].index(link_ids[1])][0],
+                           links['conn'][links['id'].index(link_ids[2])][0]]
+            # figure out which two links are the ones leaving this node
+            # and get the width of each
+            # (which controls the local flux partitioning anyway)
+            if link_starts[0] == link_starts[1]:
+                # check if 1st and 2nd match
+                wid_1 = links[wt][links['id'].index(link_ids[0])]
+                wid_2 = links[wt][links['id'].index(link_ids[1])]
+            elif link_starts[0] == link_starts[2]:
+                # check if 1st and 3rd match
+                wid_1 = links[wt][links['id'].index(link_ids[0])]
+                wid_2 = links[wt][links['id'].index(link_ids[2])]
+            else:
+                # then 2nd and 3rd must match
+                wid_1 = links[wt][links['id'].index(link_ids[1])]
+                wid_2 = links[wt][links['id'].index(link_ids[2])]
+
+            # calculate and assign QR to the node of interest
+            wid_big = np.max([wid_1, wid_2])
+            wid_small = np.min([wid_1, wid_2])
+            nodes[new_at][i] = wid_big / wid_small
+
+    # coerce into list
+    nodes[new_at] = list(nodes[new_at])
+
+    return nodes

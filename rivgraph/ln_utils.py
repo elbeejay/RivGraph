@@ -1558,3 +1558,38 @@ def links_to_gpd(links, gdobj):
     links_gpd.crs = CRS(gdobj.GetProjection())
 
     return links_gpd
+
+
+def dist_from_apex(nodes, imshape):
+    """Calculate normalized distance from apex.
+
+    Does this for nodes.
+    Calculates a normalized distances from apex, ignores pixel resolution.
+
+    """
+    # id row/coord of the apex (or representative location)
+    apex_id = nodes['inlets']
+    if len(apex_id) < 1:
+        raise ValueError('No inlets')
+    elif len(apex_id) > 1:
+        # average inlet locations to a single point
+        ins_idx = [nodes['idx'][nodes['id'].index(i)] for i in apex_id]
+        rs, cs = np.unravel_index(ins_idx, imshape)
+        apex_xy = np.mean(rs, dtype=int), np.mean(cs, dtype=int)
+    else:
+        apex_idx = nodes['idx'][nodes['id'].index(apex_id)]
+        apex_xy = np.unravel_index(apex_idx, imshape)
+
+    # calculate distances to all nodes from apex location
+    def calc_dist(apex_xy, node_xy):
+        """Euclidean distance function."""
+        return np.sqrt((apex_xy[0]-node_xy[0])**2 +
+                       (apex_xy[1]-node_xy[1])**2)
+
+    # get coordinates of all nodes in xy space
+    node_xy = [np.unravel_index(i, imshape) for i in nodes['idx']]
+    node_dists = [calc_dist(apex_xy, i) for i in node_xy]
+    # normalize and return this normalized distance
+    norm_dist = list(np.array(node_dists) / np.max(node_dists))
+
+    return norm_dist
