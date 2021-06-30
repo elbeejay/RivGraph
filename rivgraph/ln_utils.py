@@ -228,7 +228,7 @@ def delete_node(nodes, nodeid, warn=True):
 
     """
     # Get keys that have removable elements
-    nodekeys = [nk for nk in nodes.keys() if type(nodes[nk]) is not int and len(nodes[nk]) == len(nodes['id'])]
+    nodekeys = [nk for nk in nodes.keys() if type(nodes[nk]) is list and len(nodes[nk]) == len(nodes['id'])]
 
     # Check that the node has no connectivity
     nodeidx = nodes['id'].index(nodeid)

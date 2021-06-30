@@ -181,6 +181,31 @@ def add_super_apex(links, nodes, imshape):
     return links, nodes
 
 
+def delete_super_apex(links, nodes):
+    """
+    If you have a super apex, this function deletes it and connecting links.
+    """
+
+    # Get super apex node
+    if 'super_apex' not in nodes:
+        raise ValueError('no super apex detected.')
+
+    # identify super apex
+    super_apex = nodes['super_apex'][0]
+
+    # identify connecting links
+    super_links = nodes['conn'][nodes['id'].index(super_apex)]
+
+    # delete links first
+    for i in super_links:
+        links, nodes = lnu.delete_link(links, nodes, i)
+
+    # then delete super apex
+    nodes = lnu.delete_node(nodes, super_apex, warn=True)
+
+    return links, nodes
+
+
 def graphiphy(links, nodes, weight=None, inletweights=None):
     """
     Converts the RivGraph links and nodes dictionaries into a NetworkX graph
