@@ -62,7 +62,7 @@ def prune_delta(links, nodes, shoreline_shp, inlets_shp, gdobj,
     # Remove spurs from network (this includes valid inlets and outlets)
     links, nodes = lnu.remove_all_spurs(links, nodes,
                                         dontremove=list(nodes['inlets']) +
-                                                    list(nodes['outlets']))
+                                        list(nodes['outlets']))
 
     # Remove sets of links that are disconnected from inlets/outlets except for
     # a single bridge link (effectively re-pruning the network)

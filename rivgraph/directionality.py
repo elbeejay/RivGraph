@@ -482,7 +482,7 @@ def dir_shortest_paths_links(links, nodes, difthresh=0):
         else:  # DS node is the closer one
             dsnode = lconn[node_min_len.index(min(node_min_len))]
             usnode = list(set(lconn) - set([dsnode]))[0]
-
+            
             # Update certainty
             links['guess'][linkidx].append(usnode)
             links['guess_alg'][linkidx].append(alg)
