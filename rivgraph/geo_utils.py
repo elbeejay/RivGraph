@@ -357,4 +357,8 @@ def downsample_binary_geotiff(input_file, ds_factor, output_name, thresh=None):
     io.write_geotiff(img_rs, dest_gm, og.GetProjection(),
                      output_name, dtype=gdal.GDT_Byte)
 
+    # close dataset
+    og = None
+    img = None
+
     return output_name
