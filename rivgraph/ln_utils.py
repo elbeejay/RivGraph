@@ -1564,3 +1564,35 @@ def links_to_gpd(links, gdobj):
     links_gpd.crs = CRS(gdobj.GetProjection())
 
     return links_gpd
+
+
+def links_to_skel(Imask, links):
+    """
+    Convert the network back into a raster using the links.
+
+    Parameters
+    ----------
+    Imask : np.ndarray
+        Binary mask array or array of the same shape. Used to initialize the
+        raster to burn links into; Imask suggested because it is required to
+        initialize a RivGraph class.
+
+    links : dict
+        Network links and associated properties.
+
+    Returns
+    -------
+    Lskel : np.ndarray
+        Raster skeleton created from the links.
+
+    """
+    Lskel = np.zeros_like(Imask)  # initialize the skeleton
+
+    # Just a loop through the links, crude but will work
+    for lid, lidcs in zip(links['id'], links['idx']):
+        # unravel the link coordinates
+        rc = np.unravel_index(lidcs, Imask.shape)
+        # burn in skeleton
+        Lskel[rc[0], rc[1]] = 1
+
+    return Lskel

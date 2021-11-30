@@ -68,3 +68,19 @@ def test_link_widths_lengths():
     assert links['len'][0] == 7.0
     assert links['wid_adj'][0] > 2.0
     assert links['wid_adj'][0] > links['wid'][0]  # b/c single end px clipped
+
+
+def test_links_to_skel():
+    # set up synthetic mask and links
+    Imask = np.zeros((10, 10))
+    link_one = np.array([[1, 1, 1], [1, 2, 3]])
+    link_two = np.array([[4, 4, 4], [4, 5, 6]])
+    one_ravel = np.ravel_multi_index(link_one, Imask.shape)
+    two_ravel = np.ravel_multi_index(link_two, Imask.shape)
+    links = {'id': [0, 1], 'idx': [one_ravel, two_ravel]}
+    # call function
+    Lskel = ln_utils.links_to_skel(Imask, links)
+    # assertions about resulting array
+    assert np.sum(Lskel) == 6
+    assert Lskel[1, 1] == 1
+    assert Lskel[4, 4] == 1
