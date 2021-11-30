@@ -1122,3 +1122,71 @@ def calc_QR(links, nodes, wt='wid_adj', new_at='graphQR'):
                 nodes[new_at][i] = np.nan
 
     return nodes
+
+
+def calculate_fractal_dimension(skeleton):
+    """
+    Calculation of the fractal dimension via the box-counting method.
+
+    Implements the box-counting method to calculate the fractal dimension, D,
+    of an input image. Input is typically the channel network skeleton,
+    although could technically be any binary image.
+
+    Adapted from: https://github.com/mperignon/delta_metrics
+
+    Parameters
+    ----------
+    skeleton : np.ndarray
+        Binary skeleton raster with 1s at channel centerlines 0s elsewhere.
+
+    Output:
+    -------
+    D : float
+        Fractal dimension of the input image
+
+    """
+    # check input image is binary
+    if np.array_equal(skeleton, skeleton.astype(bool)) is False:
+        raise TypeError('Input array is not binary!')
+
+    # get shape of input array
+    M, N = skeleton.shape
+
+    # initialize size of box for counting
+    k = 1
+    bsize = 2**(k - 1)  # start with box size=1 pixel
+
+    # empty lists to hold values
+    boxsize = []
+    boxcount = []
+
+    # starts with the smallest box size (1 pixel)
+    # increase box size by 2x each time
+    while bsize < min(M, N)/2.:
+
+        boxsize.append(bsize)
+        boxcount_k = 0
+
+        for imin in range(1, M-bsize+1, bsize):
+
+            for jmin in range(1, N-bsize+1, bsize):
+
+                imax = imin + bsize - 1
+                jmax = jmin + bsize - 1
+
+                # counting boxes that contains value>0 cells
+                # change this condition for other type of feature extraction
+                box = skeleton[imin-1:imax, jmin-1:jmax]
+
+                if box.sum() > 0:
+                    boxcount_k += 1
+
+        boxcount.append(boxcount_k)
+
+        k += 1
+        bsize = 2**(k - 1)
+
+    fit = np.polyfit(np.log(1./np.array(boxsize)), np.log(boxcount), 1)
+    D = fit[0]
+
+    return D
