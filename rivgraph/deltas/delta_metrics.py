@@ -1141,6 +1141,14 @@ def calculate_fractal_dimension(skeleton):
 
     Output:
     -------
+    boxsize : list
+        List containing the size of the boxes used for the counting method.
+        Values are arranged in ascending order.
+
+    boxcount: list
+        Number of boxes needed to cover the skeleton at each box size value.
+        Values correspond (by index) to the box size values in that list.
+
     D : float
         Fractal dimension of the input image
 
@@ -1189,4 +1197,4 @@ def calculate_fractal_dimension(skeleton):
     fit = np.polyfit(np.log(1./np.array(boxsize)), np.log(boxcount), 1)
     D = fit[0]
 
-    return D
+    return boxsize, boxcount, D

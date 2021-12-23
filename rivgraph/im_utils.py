@@ -978,14 +978,15 @@ def downsample_binary_image(I, newsize, thresh=0.05):
 
     """
     # Get locations of all smaller pixels
-    row,col = np.where(I>0)
+    row, col = np.where(I > 0)
 
     # Get the scaling factor in both directions
     rowfact = newsize[0]/I.shape[0]
     colfact = newsize[1]/I.shape[1]
 
     # Scale the row,col coordinates and turn them into integers
-    rowcol = np.vstack((np.array(row * rowfact, dtype=np.uint16),np.array(col * colfact, dtype=np.uint16)))
+    rowcol = np.vstack((np.array(row * rowfact, dtype=np.uint16),
+                        np.array(col * colfact, dtype=np.uint16)))
 
     # Get the number of smaller pixels within each larger pixel
     rc_unique, rc_counts = np.unique(rowcol, axis=1, return_counts=True)
