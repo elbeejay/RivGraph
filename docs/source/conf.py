@@ -40,6 +40,7 @@ sys.modules['skimage'] = Mock()
 sys.modules['cv2'] = Mock()
 sys.modules['fastdtw'] = Mock()
 sys.modules['loguru'] = Mock()
+sys.modules['scipy.ndimage.interpolation']
 
 # path to repo-head
 sys.path.insert(0, os.path.abspath('../..'))
