@@ -169,6 +169,14 @@ def test_downsample_bad_factor(tmp_path):
     with pytest.raises(ValueError):
         geo_utils.downsample_binary_geotiff(g_path, 2.0, outpath)
 
+def test_downsample_bad_method(tmp_path):
+    """Test downsampling geotiff with invalid method."""
+    g_path = os.path.normpath(
+        'tests/integration/data/Colville/Colville_islands_filled.tif')
+    outpath = os.path.join(tmp_path, 'downsampled.tif')
+    # run downsampling function and throw error
+    with pytest.raises(KeyError):
+        geo_utils.downsample_binary_geotiff(g_path, 0.5, outpath, method='bad')
 
 def test_downsample_default_thresh(tmp_path):
     """Test downsampling geotiff with default thresh."""
@@ -214,5 +222,17 @@ def test_downsample_w_pad(tmp_path):
     outpath = os.path.join(tmp_path, 'downsampled.tif')
     # run downsampling function
     ofile = geo_utils.downsample_binary_geotiff(g_path, 0.76, outpath)
+    # assert output
+    assert ofile == outpath
+
+
+def test_downsample_w_scipy(tmp_path):
+    """Test downsampling geotiff with scipy method."""
+    g_path = os.path.normpath(
+        'tests/integration/data/Colville/Colville_islands_filled.tif')
+    outpath = os.path.join(tmp_path, 'downsampled.tif')
+    # run downsampling function
+    ofile = geo_utils.downsample_binary_geotiff(g_path, 0.76, outpath,
+                                                method='scipy')
     # assert output
     assert ofile == outpath

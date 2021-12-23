@@ -18,6 +18,7 @@ from pyproj import Transformer
 import warnings
 import rivgraph.io_utils as io
 import rivgraph.im_utils as im
+from scipy.ndimage.interpolation import zoom
 
 
 def get_unit(crs):
@@ -282,7 +283,8 @@ def crop_geotif(tif, cropto='first_nonzero', npad=0, outpath=None):
     return output_file
 
 
-def downsample_binary_geotiff(input_file, ds_factor, output_name, thresh=None):
+def downsample_binary_geotiff(input_file, ds_factor, output_name,
+                              thresh=None, method='rivgraph', **kwargs):
     """
     Given binary geotiff, create a downsampled one.
 
@@ -308,6 +310,21 @@ def downsample_binary_geotiff(input_file, ds_factor, output_name, thresh=None):
 
     thresh : float, optional
         Optional input to :obj:`rivgraph.im_utils.downsample_binary_image()`.
+
+    method : str, optional
+        Decide which method of interpolation / downsampling to use. The default
+        is the built in RivGraph function which uses the `thresh` keyword
+        (:obj:`rivgraph.im_utils.downsample_binary_image()`). Alternatively,
+        the scipy.ndimage.interpolation.zoom function can be used by specifying
+        this argument as 'scipy'
+
+    **kwargs : optional
+        Optional input to customize the scipy zoom function. The keyword
+        arguments that can be provided are order, mode, cval, and prefilter,
+        their definitions and uses can be found in the scipy documentation
+        for the scipy.ndimage.interpolation.zoom function. Default values
+        follow those in the scipy documentation except for the order parameter
+        which is by default 1 (linear interpolation) in this implementation.
 
     Returns
     -------
@@ -344,10 +361,24 @@ def downsample_binary_geotiff(input_file, ds_factor, output_name, thresh=None):
     # rescaling
     rs_x = int(img_x * ds_factor)  # number of x px
     rs_y = int(img_y * ds_factor)  # number of y px
-    if thresh is None:
+    if (thresh is None) and (method == 'rivgraph'):
         img_rs = im.downsample_binary_image(newimg, (rs_x, rs_y))
-    else:
+    elif method == 'rivgraph':
         img_rs = im.downsample_binary_image(newimg, (rs_x, rs_y), thresh)
+    elif method == 'scipy':
+        # do kwargs assignment
+        order = kwargs.pop('order', 1)
+        mode = kwargs.pop('mode', 'constant')
+        cval = kwargs.pop('cval', 0.0)
+        prefilter = kwargs.pop('prefilter', True)
+        img_rs = zoom(newimg, ds_factor,
+                      order=order, mode=mode, cval=cval, prefilter=prefilter)
+        # use threshold to ensure resulting interpolated image is binary
+        img_rs[img_rs < thresh] = 0
+        img_rs[img_rs >= thresh] = 1
+    else:
+        raise KeyError(
+            'Arguments not recognized, check the method input parameter.')
 
     # handle geotransformations and write the new geotif
     # adjust georeference information (mainly px size)
