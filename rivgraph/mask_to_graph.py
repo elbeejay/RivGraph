@@ -281,7 +281,7 @@ def skel_to_graph(Iskel):
     return links, nodes
 
 
-def skeletonize_mask(Imask):
+def skeletonize_mask(Imask, fill_less):
     """
     Skeletonizes an input binary image, typically a mask. Also performs some
     skeleton simplification by (1) removing pixels that don't alter connectivity,
@@ -307,10 +307,11 @@ def skeletonize_mask(Imask):
     # Simplify the skeleton (i.e. remove pixels that don't alter connectivity)
     Iskel = simplify_skel(Iskel)
 
-    # Fill small skeleton holes, re-skeletonize, and re-simplify
-    Iskel = imu.fill_holes(Iskel, maxholesize=4)
-    Iskel = morphology.skeletonize(Iskel)
-    Iskel = simplify_skel(Iskel)
+    if fill_less is False:
+        # Fill small skeleton holes, re-skeletonize, and re-simplify
+        Iskel = imu.fill_holes(Iskel, maxholesize=4)
+        Iskel = morphology.skeletonize(Iskel)
+        Iskel = simplify_skel(Iskel)
 
     # Fill single pixel holes
     Iskel = imu.fill_holes(Iskel, maxholesize=1)

@@ -595,9 +595,11 @@ class delta(rivnetwork):
         rivnetwork.__init__(self, name, path_to_mask, results_folder, verbose=verbose)
 
 
-    def skeletonize(self):
+    def skeletonize(self, fill_less=False):
         """
         Skeletonizes the delta binary mask.
+
+        Optional argument to fill fewer holes in the skeletonization process.
 
         """
         if hasattr(self, 'Imask') is False:
@@ -610,7 +612,7 @@ class delta(rivnetwork):
         else:
             logger.info('Skeletonizing mask...')
 
-            self.Iskel = m2g.skeletonize_mask(self.Imask)
+            self.Iskel = m2g.skeletonize_mask(self.Imask, fill_less)
 
             logger.info('done skeletonization.')
 
