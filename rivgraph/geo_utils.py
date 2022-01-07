@@ -374,6 +374,9 @@ def downsample_binary_geotiff(input_file, ds_factor, output_name,
         img_rs = zoom(newimg, ds_factor,
                       order=order, mode=mode, cval=cval, prefilter=prefilter)
         # use threshold to ensure resulting interpolated image is binary
+        # if threshold not specified 0.5 used
+        if thresh is None:
+            thresh = 0.5
         img_rs[img_rs < thresh] = 0
         img_rs[img_rs >= thresh] = 1
     else:
