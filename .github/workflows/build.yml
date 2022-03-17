@@ -2,7 +2,11 @@
 
 name: build
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 1 * *'  # run workflow at 12AM on first day of each month
 
 jobs:
   ubunutu-build:
@@ -21,7 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           mamba-version: "*"
           channels: conda-forge, defaults
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: install RivGraph + dependencies, then unit test
         shell: bash -l {0}
         run: |
@@ -49,7 +53,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
           channels: conda-forge, defaults
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: install RivGraph + dependencies, then unit test
         shell: bash -l {0}
         run: |
@@ -77,7 +81,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           mamba-version: "*"
           channels: conda-forge, defaults
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: install RivGraph + dependencies, then unit test
         shell: sh -l {0}
         run: |
