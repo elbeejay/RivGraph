@@ -8,10 +8,7 @@ Classes for running rivgraph commands on your channel network or centerline.
 import os
 import sys
 from loguru import logger
-try:
-    from osgeo import gdal
-except ModuleNotFoundError:
-    import gdal
+from osgeo import gdal
 import numpy as np
 import networkx as nx
 from pyproj.crs import CRS

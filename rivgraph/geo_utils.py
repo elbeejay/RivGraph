@@ -9,10 +9,7 @@ geographic data including tiffs, vrts, shapefiles, etc.
 functionality here, and some of these functions are simply unused.
 
 """
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
+from osgeo import gdal
 import numpy as np
 from pyproj import Transformer
 import warnings

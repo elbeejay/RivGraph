@@ -1,10 +1,7 @@
 """Unit tests for ln_utils.py."""
 # import pytest
 import os
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
+from osgeo import gdal
 from rivgraph import ln_utils
 
 

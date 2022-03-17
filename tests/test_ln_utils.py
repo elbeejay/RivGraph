@@ -2,11 +2,7 @@
 # import pytest
 import numpy as np
 from scipy.ndimage import distance_transform_edt as dte
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
-
+from osgeo import gdal
 from rivgraph import ln_utils
 from rivgraph.ordered_set import OrderedSet
 

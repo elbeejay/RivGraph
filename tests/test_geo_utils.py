@@ -2,14 +2,8 @@
 import pytest
 import os
 import numpy as np
-# import matplotlib.pyplot as plt
 from rivgraph import geo_utils
-# import osr
-# import ogr
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
+from osgeo import gdal
 from pyproj import CRS
 
 # function geo_utils.get_EPSG() no longer exists
