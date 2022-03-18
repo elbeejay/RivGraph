@@ -4,13 +4,13 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3
+  - python==3.9
   - gdal
   - numpy
   - geopandas
   - scikit-image
   - opencv
-  - networkx
+  - networkx<2.7
   - matplotlib
   - pyproj
   - shapely==1.7.1
